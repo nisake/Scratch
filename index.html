@@ -899,9 +899,15 @@
   init();
 
   let resizeT;
+  let lastWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     clearTimeout(resizeT);
     resizeT = setTimeout(() => {
+      // スマホのアドレスバー伸縮で高さだけ変わる resize は無視して
+      // 削り状態を保つ。幅が変わったときだけ canvas を作り直す。
+      if (window.innerWidth === lastWidth) return;
+      lastWidth = window.innerWidth;
+
       // Re-fit canvas; this clears scratched state, so repaint cover.
       const hadImage = state.haveImage;
       fitCanvas();
