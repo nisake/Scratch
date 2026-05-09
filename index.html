@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>Scratch — けずって、あらわれる</title>
+<meta name="description" content="お気に入りの写真を、宝くじやスクラッチアート風にけずって楽しむWebアプリ。画像はあなたのブラウザの中だけで処理されます。" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Scratch — けずって、あらわれる" />
+<meta property="og:description" content="お気に入りの写真を、宝くじやスクラッチアート風にけずって遊ぼう。画像はブラウザ内だけで処理されます。" />
+<meta property="og:url" content="https://nisake.github.io/Scratch/" />
+<meta property="og:image" content="https://nisake.github.io/Scratch/assets/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:site_name" content="Scratch" />
+<meta property="og:locale" content="ja_JP" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Scratch — けずって、あらわれる" />
+<meta name="twitter:description" content="お気に入りの写真を、宝くじやスクラッチアート風にけずって遊ぼう。" />
+<meta name="twitter:image" content="https://nisake.github.io/Scratch/assets/og-image.png" />
+
+<!-- Favicon -->
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg" />
+<link rel="apple-touch-icon" href="assets/favicon.svg" />
+
+<!-- Theme -->
+<meta name="theme-color" content="#f8efe8" />
+<style>
+  :root {
+    --bg: oklch(0.985 0.01 60);
+    --ink: oklch(0.22 0.015 50);
+    --muted: oklch(0.55 0.015 50);
+    --line: oklch(0.92 0.01 60);
+    --accent: oklch(0.72 0.14 20);     /* soft coral */
+    --accent-2: oklch(0.78 0.10 320);  /* soft mauve */
+    --card: oklch(0.995 0.005 60);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+  body {
+    min-height: 100vh;
+    font-family: "Helvetica Neue", Helvetica, "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 28px 20px 60px;
+    gap: 22px;
+    user-select: none;
+    -webkit-user-select: none;
+    overscroll-behavior: contain;
+  }
+  header {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+  .brand h1 {
+    font-size: 22px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .brand .heart {
+    color: var(--accent);
+    font-size: 14px;
+  }
+  .brand p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+  .meter {
+    font-variant-numeric: tabular-nums;
+    font-size: 12px;
+    color: var(--muted);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 6px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .meter b {
+    color: var(--ink);
+    font-weight: 600;
+  }
+  .meter .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transition: background .3s;
+  }
+
+  main {
+    width: 100%;
+    max-width: 720px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+
+  .stage {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 24px 60px -32px rgba(60,40,40,0.18);
+  }
+  .stage canvas, .stage img.base {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .stage canvas {
+    touch-action: none;
+    cursor: grab;
+  }
+  .stage canvas.scratching {
+    cursor: grabbing;
+  }
+  .stage .placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background:
+      repeating-linear-gradient(45deg,
+        oklch(0.97 0.01 60) 0 14px,
+        oklch(0.95 0.01 60) 14px 28px);
+    color: var(--muted);
+    font-size: 13px;
+    text-align: center;
+    padding: 20px;
+  }
+  .placeholder .big {
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .placeholder svg {
+    width: 44px;
+    height: 44px;
+    color: var(--accent);
+  }
+  .placeholder small {
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 320px;
+  }
+
+  .stage .hint {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(20,16,14,0.78);
+    color: oklch(0.99 0 0);
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    pointer-events: none;
+    transition: opacity .4s;
+    backdrop-filter: blur(6px);
+    letter-spacing: 0.02em;
+  }
+  .stage .hint.hidden { opacity: 0; }
+
+  .reveal-burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity .5s ease;
+    background: radial-gradient(circle at center,
+      oklch(1 0 0 / 0.0) 30%,
+      oklch(1 0 0 / 0.55) 100%);
+  }
+  .reveal-burst.show { opacity: 1; }
+  .reveal-burst span {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--ink);
+    background: var(--card);
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    box-shadow: 0 12px 30px -12px rgba(60,40,40,0.25);
+    transform: scale(.9);
+    transition: transform .5s cubic-bezier(.2,.8,.2,1.2);
+  }
+  .reveal-burst.show span { transform: scale(1); }
+
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  @media (min-width: 560px) {
+    .controls { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .btn {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 13px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: transform .12s ease, background .2s ease, border-color .2s ease;
+    text-align: center;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    min-height: 44px;
+  }
+  .btn:hover { background: oklch(0.98 0.01 60); }
+  .btn:active { transform: translateY(1px); }
+  .btn.primary {
+    background: var(--ink);
+    color: oklch(0.99 0 0);
+    border-color: var(--ink);
+  }
+  .btn.primary:hover { background: oklch(0.30 0.015 50); }
+  .btn .ic { display:inline-block; transform: translateY(2px); margin-right: 6px; }
+
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 16px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .panel h2 {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    align-items: center;
+  }
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 140px;
+    flex: 1;
+  }
+  .field label {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  input[type="range"] {
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--line);
+    border-radius: 999px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--card);
+    box-shadow: 0 0 0 1px var(--line);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: var(--ink);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 3px solid var(--card);
+  }
+
+  .pills {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    appearance: none;
+    border: 1px solid var(--line);
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12px;
+    padding: 7px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background .15s, border-color .15s, color .15s;
+  }
+  .pill:hover { background: oklch(0.97 0.01 60); }
+  .pill.active {
+    background: var(--ink);
+    color: oklch(0.99 0 0);
+    border-color: var(--ink);
+  }
+  .pill .swatch {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+
+  footer {
+    color: var(--muted);
+    font-size: 11px;
+    text-align: center;
+    line-height: 1.6;
+    max-width: 520px;
+  }
+
+  /* Scratch art mode color picker */
+  .swatches {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .sw {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--card);
+    box-shadow: 0 0 0 1px var(--line);
+    cursor: pointer;
+    transition: transform .12s;
+  }
+  .sw:hover { transform: scale(1.08); }
+  .sw.active { box-shadow: 0 0 0 2px var(--ink); }
+
+  .hidden-input { display: none; }
+
+  /* スマホ最適化 */
+  @media (max-width: 480px) {
+    body {
+      padding: 18px 14px 48px;
+      gap: 16px;
+    }
+    header {
+      flex-wrap: wrap;
+      gap: 8px 12px;
+    }
+    .brand h1 { font-size: 20px; }
+    .brand p { display: none; }
+    .meter {
+      font-size: 11px;
+      padding: 5px 10px;
+    }
+    .panel { padding: 14px; }
+    .stage { border-radius: 14px; }
+    .controls { gap: 8px; }
+    .btn { font-size: 13px; padding: 12px 10px; }
+  }
+
+  /* タッチデバイスでホバーを無効化 */
+  @media (hover: none) {
+    .btn:hover { background: var(--card); }
+    .pill:hover { background: var(--card); }
+    .sw:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <h1>Scratch</h1>
+    <span class="heart">♥</span>
+    <p>けずって、あらわれる</p>
+  </div>
+  <div class="meter" id="meter">
+    <span class="dot" id="dot"></span>
+    <span><b id="pct">0</b>% けずった</span>
+  </div>
+</header>
+
+<main>
+  <div class="stage" id="stage">
+    <img class="base" id="base" alt="" style="display:none" />
+    <canvas id="scratch"></canvas>
+    <div class="placeholder" id="placeholder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="18" height="18" rx="3"/>
+        <circle cx="9" cy="9" r="1.6" fill="currentColor"/>
+        <path d="m21 15-4.5-4.5L7 20"/>
+      </svg>
+      <div class="big">画像を選んでスクラッチ ✨</div>
+      <small>下の「画像をえらぶ」から、好きな写真をアップロードしてね。<br/>
+        その上に銀色のフィルムが現れるので、こすって削ってみよう。</small>
+    </div>
+    <div class="reveal-burst" id="burst"><span id="burstMsg">いい感じ ♥</span></div>
+    <div class="hint hidden" id="hint">ドラッグで けずってみよう</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn primary" id="pickBtn">
+      <span class="ic">⊕</span>画像をえらぶ
+    </button>
+    <button class="btn" id="resetBtn">
+      <span class="ic">↻</span>もう一度かぶせる
+    </button>
+    <button class="btn" id="revealBtn">
+      <span class="ic">✶</span>ぜんぶ見せて
+    </button>
+    <button class="btn" id="saveBtn">
+      <span class="ic">↓</span>保存
+    </button>
+    <input type="file" id="file" accept="image/*" class="hidden-input" />
+  </div>
+
+  <div class="panel">
+    <h2>モード</h2>
+    <div class="pills" id="modePills">
+      <button class="pill active" data-mode="silver">
+        <span class="swatch" style="background:linear-gradient(135deg,#dcdcdc,#f6f6f6 40%,#9b9b9b)"></span>
+        宝くじ風（銀）
+      </button>
+      <button class="pill" data-mode="gold">
+        <span class="swatch" style="background:linear-gradient(135deg,#e9c87a,#fff1c1 40%,#b48a2c)"></span>
+        ゴールド
+      </button>
+      <button class="pill" data-mode="pink">
+        <span class="swatch" style="background:linear-gradient(135deg,#ffd2dc,#ffe9ee 40%,#e88aa1)"></span>
+        ハートピンク
+      </button>
+      <button class="pill" data-mode="art">
+        <span class="swatch" style="background:#1a1a1a"></span>
+        スクラッチアート（黒）
+      </button>
+    </div>
+
+    <div id="artRow" style="display:none; flex-direction: column; gap: 10px;">
+      <h2 style="margin-top:4px;">下の色（アート用）</h2>
+      <div class="swatches" id="swatches"></div>
+      <small style="color:var(--muted); font-size:12px;">
+        画像の代わりに、選んだ色がベースになります。けずると下から色がでてくるよ。
+      </small>
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label>ブラシのふとさ <span id="sizeVal" style="color:var(--ink)">28</span>px</label>
+        <input type="range" id="size" min="6" max="80" value="28" />
+      </div>
+      <div class="field">
+        <label>けずりやすさ <span id="softVal" style="color:var(--ink)">中</span></label>
+        <input type="range" id="soft" min="0" max="2" value="1" step="1" />
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  画像はあなたのブラウザの中だけで処理されます。アップロードや保存はされません。<br/>
+  指やマウスでなぞって、好きなところからけずってね。
+</footer>
+
+<script>
+(() => {
+  const stage = document.getElementById('stage');
+  const canvas = document.getElementById('scratch');
+  const ctx = canvas.getContext('2d');
+  const baseImg = document.getElementById('base');
+  const placeholder = document.getElementById('placeholder');
+  const fileInput = document.getElementById('file');
+  const pickBtn = document.getElementById('pickBtn');
+  const resetBtn = document.getElementById('resetBtn');
+  const revealBtn = document.getElementById('revealBtn');
+  const saveBtn = document.getElementById('saveBtn');
+  const sizeInput = document.getElementById('size');
+  const softInput = document.getElementById('soft');
+  const sizeVal = document.getElementById('sizeVal');
+  const softVal = document.getElementById('softVal');
+  const pct = document.getElementById('pct');
+  const dot = document.getElementById('dot');
+  const burst = document.getElementById('burst');
+  const hint = document.getElementById('hint');
+  const modePills = document.getElementById('modePills');
+  const artRow = document.getElementById('artRow');
+  const swatchesEl = document.getElementById('swatches');
+
+  const state = {
+    mode: 'silver',
+    artColor: '#ff6f91',
+    haveImage: false,
+    revealed: false,
+    last: null,
+    drawing: false,
+    burstShown: false,
+  };
+
+  // Each entry: { id, label, css (for stage background), paint(ctx, w, h) for export }
+  const RAINBOW_CSS = 'linear-gradient(90deg,#ff7a7a 0%,#ffb86b 17%,#ffe66b 34%,#9ee37d 51%,#7ad7ff 68%,#9b8cff 85%,#ff8fd1 100%)';
+  const ART_BASES = [
+    { id: 'rainbow', label: '虹', css: RAINBOW_CSS,
+      paint: (c, w, h) => {
+        const g = c.createLinearGradient(0, 0, w, 0);
+        g.addColorStop(0.00, '#ff7a7a');
+        g.addColorStop(0.17, '#ffb86b');
+        g.addColorStop(0.34, '#ffe66b');
+        g.addColorStop(0.51, '#9ee37d');
+        g.addColorStop(0.68, '#7ad7ff');
+        g.addColorStop(0.85, '#9b8cff');
+        g.addColorStop(1.00, '#ff8fd1');
+        c.fillStyle = g; c.fillRect(0, 0, w, h);
+      }
+    },
+    { id: '#ff6f91', css: '#ff6f91' },
+    { id: '#ffc15e', css: '#ffc15e' },
+    { id: '#7bd389', css: '#7bd389' },
+    { id: '#5fb6f0', css: '#5fb6f0' },
+    { id: '#a78bfa', css: '#a78bfa' },
+    { id: '#ff8fb1', css: '#ff8fb1' },
+    { id: '#1a1a1a', css: '#1a1a1a' },
+    { id: '#ffffff', css: '#ffffff' },
+  ];
+  // make solid colors paint themselves
+  ART_BASES.forEach(b => {
+    if (!b.paint) b.paint = (c, w, h) => { c.fillStyle = b.css; c.fillRect(0, 0, w, h); };
+  });
+  state.artBase = ART_BASES[0]; // default rainbow
+  ART_BASES.forEach((base, i) => {
+    const b = document.createElement('button');
+    b.className = 'sw' + (i === 0 ? ' active' : '');
+    b.style.background = base.css;
+    if (base.id === 'rainbow') b.title = '虹色';
+    b.addEventListener('click', () => {
+      state.artBase = base;
+      [...swatchesEl.children].forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      if (state.mode === 'art') applyArtBase();
+    });
+    swatchesEl.appendChild(b);
+  });
+
+  function fitCanvas() {
+    const r = stage.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(r.width * dpr);
+    canvas.height = Math.round(r.height * dpr);
+    canvas.style.width = r.width + 'px';
+    canvas.style.height = r.height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  }
+
+  function paintCover() {
+    const r = stage.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.clearRect(0, 0, w, h);
+
+    let grad;
+    if (state.mode === 'silver') {
+      grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0,    '#cfcfcf');
+      grad.addColorStop(0.35, '#f3f3f3');
+      grad.addColorStop(0.55, '#bcbcbc');
+      grad.addColorStop(0.8,  '#e6e6e6');
+      grad.addColorStop(1,    '#9a9a9a');
+    } else if (state.mode === 'gold') {
+      grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0,    '#b48a2c');
+      grad.addColorStop(0.35, '#fff1c1');
+      grad.addColorStop(0.55, '#d6a93a');
+      grad.addColorStop(0.8,  '#fbe28a');
+      grad.addColorStop(1,    '#9b6b1c');
+    } else if (state.mode === 'pink') {
+      grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0,    '#e88aa1');
+      grad.addColorStop(0.4,  '#ffd2dc');
+      grad.addColorStop(0.7,  '#f9aebd');
+      grad.addColorStop(1,    '#d56e8a');
+    } else { // art
+      grad = ctx.createLinearGradient(0, 0, w, h);
+      grad.addColorStop(0,    '#171717');
+      grad.addColorStop(0.5,  '#262626');
+      grad.addColorStop(1,    '#0d0d0d');
+    }
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    // sparkle texture
+    const sparkles = state.mode === 'art' ? 30 : 200;
+    for (let i = 0; i < sparkles; i++) {
+      const x = Math.random() * w;
+      const y = Math.random() * h;
+      const a = Math.random() * 0.18 + 0.02;
+      const s = Math.random() * 1.6 + 0.3;
+      ctx.fillStyle = state.mode === 'art'
+        ? `rgba(255,255,255,${a*0.6})`
+        : `rgba(255,255,255,${a})`;
+      ctx.beginPath();
+      ctx.arc(x, y, s, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // label like a lottery card
+    if (state.mode !== 'art' && !state.haveImage) {
+      ctx.fillStyle = 'rgba(0,0,0,0.18)';
+      ctx.font = '600 14px "Helvetica Neue", Helvetica, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('SCRATCH HERE', w / 2, h / 2 - 6);
+      ctx.font = '500 11px "Helvetica Neue", Helvetica, sans-serif';
+      ctx.fillText('画像をえらんでね', w / 2, h / 2 + 14);
+    }
+
+    state.revealed = false;
+    state.burstShown = false;
+    state.fullShown = false;
+    burst.classList.remove('show');
+    updateMeter(0);
+  }
+
+  function applyArtBase() {
+    if (state.mode !== 'art') return;
+    baseImg.style.display = 'none';
+    placeholder.style.display = 'none';
+    stage.style.background = state.artBase.css;
+    state.haveImage = true; // treat as ready
+  }
+
+  function loadImage(src) {
+    baseImg.onload = () => {
+      baseImg.style.display = 'block';
+      placeholder.style.display = 'none';
+      stage.style.background = '';
+      state.haveImage = true;
+      paintCover();
+      showHintBriefly();
+    };
+    baseImg.src = src;
+  }
+
+  function showHintBriefly() {
+    hint.classList.remove('hidden');
+    clearTimeout(showHintBriefly._t);
+    showHintBriefly._t = setTimeout(() => hint.classList.add('hidden'), 2200);
+  }
+
+  function getPos(e) {
+    const r = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return { x: t.clientX - r.left, y: t.clientY - r.top };
+  }
+
+  function scratchAt(p) {
+    if (!state.haveImage) return;
+    const size = parseInt(sizeInput.value, 10);
+    const soft = parseInt(softInput.value, 10); // 0,1,2
+    ctx.globalCompositeOperation = 'destination-out';
+
+    if (state.last) {
+      // draw a smooth line between last and current, with multiple stamps
+      const dx = p.x - state.last.x;
+      const dy = p.y - state.last.y;
+      const d = Math.hypot(dx, dy);
+      const step = Math.max(2, size / 4);
+      const n = Math.ceil(d / step);
+      for (let i = 1; i <= n; i++) {
+        const t = i / n;
+        const x = state.last.x + dx * t;
+        const y = state.last.y + dy * t;
+        stamp(x, y, size, soft);
+      }
+    } else {
+      stamp(p.x, p.y, size, soft);
+    }
+    state.last = p;
+  }
+
+  function stamp(x, y, size, soft) {
+    if (soft === 0) {
+      // hard round
+      ctx.beginPath();
+      ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      // soft radial
+      const r = size / 2;
+      const grd = ctx.createRadialGradient(x, y, 0, x, y, r);
+      const innerA = soft === 2 ? 0.95 : 1.0;
+      const outerA = soft === 2 ? 0 : 0.3;
+      grd.addColorStop(0, `rgba(0,0,0,${innerA})`);
+      grd.addColorStop(0.7, `rgba(0,0,0,${(innerA + outerA) / 2})`);
+      grd.addColorStop(1, `rgba(0,0,0,${outerA})`);
+      ctx.fillStyle = grd;
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  function start(e) {
+    if (!state.haveImage) return;
+    e.preventDefault();
+    state.drawing = true;
+    state.last = null;
+    canvas.classList.add('scratching');
+    scratchAt(getPos(e));
+    hint.classList.add('hidden');
+  }
+  function move(e) {
+    if (!state.drawing) return;
+    e.preventDefault();
+    scratchAt(getPos(e));
+    if (move._tick) return;
+    move._tick = true;
+    requestAnimationFrame(() => {
+      move._tick = false;
+      sampleProgress();
+    });
+  }
+  function end(e) {
+    if (!state.drawing) return;
+    state.drawing = false;
+    state.last = null;
+    canvas.classList.remove('scratching');
+    sampleProgress();
+  }
+
+  function sampleProgress() {
+    // sample at low resolution for speed
+    const sw = 60, sh = 45;
+    const tmp = document.createElement('canvas');
+    tmp.width = sw; tmp.height = sh;
+    const tctx = tmp.getContext('2d');
+    tctx.drawImage(canvas, 0, 0, sw, sh);
+    const data = tctx.getImageData(0, 0, sw, sh).data;
+    let cleared = 0;
+    for (let i = 3; i < data.length; i += 4) {
+      if (data[i] < 32) cleared++;
+    }
+    const ratio = cleared / (sw * sh);
+    updateMeter(ratio);
+    // 2-stage celebration: a gentle nudge mid-way, the real one near the end.
+    if (ratio > 0.5 && !state.burstShown) {
+      state.burstShown = true;
+      document.getElementById('burstMsg').textContent = 'いい感じ ♥';
+      burst.classList.add('show');
+      setTimeout(() => burst.classList.remove('show'), 1300);
+    }
+    if (ratio > 0.95 && !state.fullShown) {
+      state.fullShown = true;
+      document.getElementById('burstMsg').textContent = 'ぜんぶ見えたよ ♥';
+      burst.classList.add('show');
+      setTimeout(() => burst.classList.remove('show'), 1800);
+    }
+  }
+
+  function updateMeter(ratio) {
+    const v = Math.round(ratio * 100);
+    pct.textContent = v;
+    const hue = 20 + ratio * 120; // coral -> green-ish
+    dot.style.background = `oklch(0.72 0.14 ${hue})`;
+  }
+
+  // Events
+  canvas.addEventListener('mousedown', start);
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, { passive: false });
+  canvas.addEventListener('touchmove', move, { passive: false });
+  canvas.addEventListener('touchend', end);
+  canvas.addEventListener('touchcancel', end);
+
+  pickBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => {
+    const f = e.target.files && e.target.files[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => loadImage(ev.target.result);
+    reader.readAsDataURL(f);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!state.haveImage) return;
+    paintCover();
+    showHintBriefly();
+  });
+  revealBtn.addEventListener('click', () => {
+    if (!state.haveImage) return;
+    // animated wipe
+    const r = stage.getBoundingClientRect();
+    const total = 28;
+    let i = 0;
+    const tick = () => {
+      ctx.globalCompositeOperation = 'destination-out';
+      const y = (i / total) * r.height;
+      ctx.fillStyle = 'rgba(0,0,0,1)';
+      ctx.fillRect(0, y - 4, r.width, r.height / total + 8);
+      i++;
+      if (i <= total) requestAnimationFrame(tick);
+      else { sampleProgress(); }
+    };
+    tick();
+  });
+  saveBtn.addEventListener('click', () => {
+    if (!state.haveImage) return;
+    const r = stage.getBoundingClientRect();
+    const out = document.createElement('canvas');
+    out.width = r.width * 2;
+    out.height = r.height * 2;
+    const octx = out.getContext('2d');
+    if (state.mode === 'art') {
+      state.artBase.paint(octx, out.width, out.height);
+    } else if (baseImg.src) {
+      octx.drawImage(baseImg, 0, 0, out.width, out.height);
+    }
+    octx.drawImage(canvas, 0, 0, out.width, out.height);
+    const link = document.createElement('a');
+    link.download = 'scratch.png';
+    link.href = out.toDataURL('image/png');
+    link.click();
+  });
+
+  modePills.addEventListener('click', (e) => {
+    const b = e.target.closest('.pill');
+    if (!b) return;
+    [...modePills.children].forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    state.mode = b.dataset.mode;
+    artRow.style.display = state.mode === 'art' ? 'flex' : 'none';
+    if (state.mode === 'art') {
+      applyArtBase();
+      paintCover();
+      showHintBriefly();
+    } else {
+      // restore image base
+      if (baseImg.src) {
+        baseImg.style.display = 'block';
+        placeholder.style.display = 'none';
+        stage.style.background = '';
+        state.haveImage = true;
+        paintCover();
+      } else {
+        baseImg.style.display = 'none';
+        placeholder.style.display = 'flex';
+        stage.style.background = '';
+        state.haveImage = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      }
+    }
+  });
+
+  sizeInput.addEventListener('input', () => sizeVal.textContent = sizeInput.value);
+  softInput.addEventListener('input', () => {
+    softVal.textContent = ['硬め','中','やわらか'][softInput.value];
+  });
+
+  // Initial
+  function init() {
+    fitCanvas();
+    if (state.mode === 'art' && !baseImg.src) {
+      // user starts on silver by default; just clear
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+  init();
+
+  let resizeT;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(() => {
+      // Re-fit canvas; this clears scratched state, so repaint cover.
+      const hadImage = state.haveImage;
+      fitCanvas();
+      if (hadImage) paintCover();
+    }, 120);
+  });
+})();
+</script>
+</body>
+</html>

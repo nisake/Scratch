@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <defs>
+    <linearGradient id="silverFoil" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#d4d4d4"/>
+      <stop offset="0.35" stop-color="#fafafa"/>
+      <stop offset="0.6" stop-color="#b6b6b6"/>
+      <stop offset="1" stop-color="#8c8c8c"/>
+    </linearGradient>
+  </defs>
+  <!-- 銀色フィルム背景 -->
+  <rect width="32" height="32" rx="7" ry="7" fill="url(#silverFoil)"/>
+  <!-- 削り跡1（左下→右上の太い帯） -->
+  <path d="M2 22 L22 2 L26 6 L6 26 Z" fill="#ffd1be" opacity="0.85"/>
+  <!-- 削り跡2（右下にも一筋） -->
+  <path d="M12 30 L30 12 L31 13 L13 31 Z" fill="#ffd1be" opacity="0.7"/>
+  <!-- 中央のハート（削って現れたコーラル） -->
+  <path d="M16 22.5
+           C11.8 18.2, 9.4 14.5, 12 11.5
+           C13.6 9.8, 15.3 10.4, 16 12
+           C16.7 10.4, 18.4 9.8, 20 11.5
+           C22.6 14.5, 20.2 18.2, 16 22.5 Z"
+        fill="#e87a8e"/>
+</svg>
