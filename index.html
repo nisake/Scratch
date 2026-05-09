@@ -130,6 +130,9 @@
     width: 100%;
     height: 100%;
   }
+  .stage img.base {
+    object-fit: cover; /* 万一クランプされたときの保険 */
+  }
   .stage canvas {
     touch-action: none;
     cursor: grab;
@@ -660,12 +663,24 @@
     state.haveImage = true; // treat as ready
   }
 
+  function applyImageAspect() {
+    if (!baseImg.naturalWidth || !baseImg.naturalHeight) return;
+    const r = baseImg.naturalWidth / baseImg.naturalHeight;
+    // 画面に収まる範囲にクランプ（0.55〜2.4）。
+    // スマホ縦撮り9:16と0.5625なのでギリカバー、
+    // 超ワイドパノラマも障害なく表示させる。
+    const clamped = Math.max(0.55, Math.min(2.4, r));
+    stage.style.aspectRatio = String(clamped);
+  }
+
   function loadImage(src) {
     baseImg.onload = () => {
+      applyImageAspect();
       baseImg.style.display = 'block';
       placeholder.style.display = 'none';
       stage.style.background = '';
       state.haveImage = true;
+      fitCanvas();    // ステージサイズが変わったので canvas を作り直し
       paintCover();
       showHintBriefly();
     };
@@ -862,18 +877,25 @@
     state.mode = b.dataset.mode;
     artRow.style.display = state.mode === 'art' ? 'flex' : 'none';
     if (state.mode === 'art') {
+      // アートモードはデフォルト比率に戻す
+      stage.style.aspectRatio = '4 / 3';
+      fitCanvas();
       applyArtBase();
       paintCover();
       showHintBriefly();
     } else {
       // restore image base
       if (baseImg.src) {
+        applyImageAspect(); // 画像比率に戻す
         baseImg.style.display = 'block';
         placeholder.style.display = 'none';
         stage.style.background = '';
         state.haveImage = true;
+        fitCanvas();
         paintCover();
       } else {
+        stage.style.aspectRatio = '4 / 3';
+        fitCanvas();
         baseImg.style.display = 'none';
         placeholder.style.display = 'flex';
         stage.style.background = '';
